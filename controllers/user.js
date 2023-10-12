@@ -1,50 +1,70 @@
 import { User } from "../models/user.js";
+import bcrypt from "bcrypt";
+import { sendCookie } from "../utils/feature.js";
+import jwt from "jsonwebtoken";
 
 export const getAllUsers = async (req, res) => {
-    const users = await User.find({});
-    // console.log(req.query);
-    // console.log(req.query.key);
-
-    const keyword = req.query.keyword;
-    console.log(keyword);
-
-    res.json({
-        success: true,
-        users,
-    })
 }
 
-export const register = async (req, res) => {
-    const { name, email, password } = req.body;
-    await User.create({
-        name,
-        email,
-        password,
-    });
-    res.status(201).cookie("key", "val").json({
-        success: true,
-        message: 'registered successfully',
-    })
-}
+export const login = async (req, res, next) => {
+    const { email, password } = req.body;
 
-export const special = (req, res) => {
-    res.json({
-        success: true,
-        message: "just joking",
-    })
-}
+    const user = await User.findOne({ email }).select("+password");
 
-export const getUserDetails = async(req,res)=>{
-    // below is the dynamic route always try to keep it at the end
-    // router.get("/userid/:id", async (req, res) => {
-        // const {id}=req.body;
-        // const {id}=req.query;
-        const { id } = req.params;
-    
-        const user = await User.findById(id);
-    
-        res.json({
-            success: true,
-            user,
+    if (!user) {
+        return res.status(404).json({
+            success: false,
+            message: "Invlid Email or Password",
         })
     }
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+        return res.status(404).json({
+            success: false,
+            message: "Invlid Email or Password",
+        })
+    }
+
+    sendCookie(user, res, `Welcome back, ${user.name}`, 200)
+
+}
+export const register = async (req, res) => {
+    const { name, email, password } = req.body;
+
+    let user = await User.findOne({ email });
+
+    if (user) {
+        return res.status(404).json({
+            success: false,
+            message: "User Already Exist",
+        })
+    }
+    const hashedPassword = await bcrypt.hash(password, 10)
+
+    user = await User.create({ name, email, password: hashedPassword });
+
+    sendCookie(user, res, "Registered successfully", 201);
+}
+
+
+export const getMyProfile = async (req, res) => {
+    const id = "myid";
+
+    const { token } = req.cookies;
+    console.log(token)
+
+    if (!token) {
+        return res.status(404).json({
+            success: true,
+            message: "Login first",
+        })
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET)
+    const user = await User.findById(decoded._id);
+    res.status(200).json({
+        success: true,
+        user,
+    })
+}
