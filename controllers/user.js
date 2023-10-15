@@ -12,18 +12,12 @@ export const login = async (req, res, next) => {
     const user = await User.findOne({ email }).select("+password");
 
     if (!user) {
-        return res.status(404).json({
-            success: false,
-            message: "Invlid Email or Password",
-        })
+        return next(new ErrorHandler("Invalid Email or Password",400))
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-        return res.status(404).json({
-            success: false,
-            message: "Invlid Email or Password",
-        })
+        return next(new ErrorHandler("Invalid Email or Password",400))
     }
 
     sendCookie(user, res, `Welcome back, ${user.name}`, 200)
@@ -35,10 +29,7 @@ export const register = async (req, res) => {
     let user = await User.findOne({ email });
 
     if (user) {
-        return res.status(404).json({
-            success: false,
-            message: "User Already Exist",
-        })
+        return next(new ErrorHandler("User Already Exist",400))
     }
     const hashedPassword = await bcrypt.hash(password, 10)
 
@@ -48,23 +39,37 @@ export const register = async (req, res) => {
 }
 
 
-export const getMyProfile = async (req, res) => {
-    const id = "myid";
+export const getMyProfile = (req, res) => {
 
-    const { token } = req.cookies;
-    console.log(token)
-
-    if (!token) {
-        return res.status(404).json({
-            success: true,
-            message: "Login first",
-        })
-    }
-
-    const decoded = jwt.verify(token, process.env.JWT_SECRET)
-    const user = await User.findById(decoded._id);
     res.status(200).json({
         success: true,
-        user,
+        user: req.user,
+    })
+}
+
+export const logout = async (req, res, next) => {
+    // const { email, password } = req.body;
+
+    // const user = await User.findOne({ email }).select("+password");
+
+    // if (!user) {
+    //     return res.status(404).json({
+    //         success: false,
+    //         message: "Invalid Email or Password",
+    //     })
+    // }
+
+    // const isMatch = await bcrypt.compare(password, user.password);
+    // if (!isMatch) {
+    //     return res.status(404).json({
+    //         success: false,
+    //         message: "Invalid Email or Password",
+    //     })
+    // }
+
+    // sendCookie(user, res, `Welcome back, ${user.name}`, 200)
+    res.status(200).cookie("token", "", { expires: new Date(Date.now()) }).json({
+        success: true,
+        user: req.user,
     })
 }
