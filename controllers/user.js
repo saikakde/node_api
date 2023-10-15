@@ -47,22 +47,22 @@ export const register = async (req, res,next) => {
 }
 
 
-export const getMyProfile = (req, res) => {
+export const getMyProfile = async (req, res) => {
+    const id = "myid";
 
+    const { token } = req.cookies;
+    console.log(token)
+
+    if (!token) {
+        return res.status(404).json({
+            success: true,
+            message: "Login first",
+        })
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET)
+    const user = await User.findById(decoded._id);
     res.status(200).json({
-        success: true,
-        user: req.user,
-    })
-}
-
-export const logout = (req, res) => {
-        res.status(200).cookie("token", "", { 
-            expires: new Date(Date.now()),
-            // httpOnly: true,
-            // maxAge: 15 * 60 * 1000,
-            sameSite:process.env.NODE_ENV==="Development"?"lax":"none",
-            secure:process.env.NODE_ENV==="Development"?false:true
-         }).json({
         success: true,
         user: req.user,
     })
