@@ -22,10 +22,25 @@ app.use("/api/v1/task",taskRouter);
 
 // cross origin resource sharing
 app.use(cors({
-    origin:[process.env.FRONTEND_URL],
+    // origin:[process.env.FRONTEND_URL],
+    origin:'*',
     methods:["GET","POST","PUT","DELETE"],
-    credentials:true
+    // credentials:true
 }))
+
+// var corsOptions = {
+//     origin: ["http://localhost:5173"],
+//     optionsSuccessStatus: 200 // For legacy browser support
+//     }
+    
+//     app.use(cors(corsOptions));
+  
+//   app.all('*', function(req, res, next) {
+//     const origin = cors.origin.includes(req.header('origin').toLowerCase()) ? req.headers.origin : cors.default;
+//     res.header("Access-Control-Allow-Origin", origin);
+//     res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+//     next();
+//   });
 
 
 app.get('/',(req,res)=>{
